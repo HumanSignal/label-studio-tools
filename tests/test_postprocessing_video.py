@@ -1,4 +1,3 @@
-import pytest
 from postprocessing.video import extract_key_frames
 
 
