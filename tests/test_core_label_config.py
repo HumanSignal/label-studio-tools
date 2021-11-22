@@ -14,4 +14,7 @@ def test_parsing_label_config():
               </Choices>
             </View>'''
     config = parse_config(label_config)
-    assert config
+    assert 'text_class' in config
+    assert config['text_class']['type'] == 'Choices'
+    assert config['text_class']['to_name'] == ['text']
+    assert config['text_class']['labels'] == ['class_A', 'class_B']
