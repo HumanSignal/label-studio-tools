@@ -1,4 +1,4 @@
-from core.label_config import parse_config
+from label_studio_tools.core.label_config import parse_config
 
 
 def test_parsing_label_config():
