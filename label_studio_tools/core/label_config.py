@@ -3,7 +3,7 @@ import logging
 from collections import defaultdict
 from lxml import etree
 
-from core.utils.exceptions import LabelStudioXMLSyntaxErrorSentryIgnored
+from label_studio_tools.core.utils.exceptions import LabelStudioXMLSyntaxErrorSentryIgnored
 
 logger = logging.getLogger(__name__)
 
