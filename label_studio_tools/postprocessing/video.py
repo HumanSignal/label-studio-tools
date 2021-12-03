@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 def extract_key_frames(results):
     """
     Extract frames from key frames from video annotation results
@@ -9,7 +11,7 @@ def extract_key_frames(results):
         sequence = result['value']['sequence']
         if len(sequence) < 1:
             continue
-        label = result['value']['labels']
+        label = result['value'].get('labels', [])
         sequence = sorted(sequence, key=lambda d: d['frame'])
         if len(sequence) < 2:
             element = sequence.pop()
@@ -17,7 +19,7 @@ def extract_key_frames(results):
                 _construct_result_from_frames(frame1=element,
                                               frame2={},
                                               res_type="rectanglelabels",
-                                              res_id=result['id'],
+                                              res=result,
                                               label=label,
                                               frameCount=result["value"].get("frameCount", 0),
                                               exclude_first=False)
@@ -30,9 +32,10 @@ def extract_key_frames(results):
                 final_results.extend(_construct_result_from_frames(frame1=frame_a,
                                                                    frame2=frame_b,
                                                                    res_type="rectanglelabels",
-                                                                   res_id=result['id'],
+                                                                   res=result,
                                                                    label=label,
-                                                                   frameCount=result["value"].get("frameCount", 0),
+                                                                   frameCount=result["value"].get("frameCount",
+                                                                                                  0),
                                                                    exclude_first=exclude_first))
                 exclude_first = frame_a['enabled']
     return final_results
@@ -41,7 +44,7 @@ def extract_key_frames(results):
 def _construct_result_from_frames(frame1,
                                   frame2,
                                   res_type,
-                                  res_id,
+                                  res,
                                   label,
                                   frameCount=0,
                                   exclude_first=True):
@@ -50,7 +53,7 @@ def _construct_result_from_frames(frame1,
     :param frame1: First frame in sequence
     :param frame2: Next frame in sequence
     :param res_type: Result type (e.g. rectanglelabels)
-    :param res_id: Result id
+    :param res: Result dict
     :param label: Result label
     :param frameCount: Total frame count in the video
     :param exclude_first: Exclude first result to deduplicate results
@@ -69,27 +72,23 @@ def _construct_result_from_frames(frame1,
     for i in range(start_i, frame_count):
         frame_number = i + frame1['frame']
         delta = i / (frame_count - 1)
-        x_delta = 0 if (frame1["x"] == frame2.get("x") or frame2 == {}) else (frame2.get("x", 0) - frame1["x"]) * delta
-        y_delta = 0 if (frame1["y"] == frame2.get("y") or frame2 == {}) else (frame2.get("y", 0) - frame1["y"]) * delta
-        rot_delta = 0 if (frame1["rotation"] == frame2.get("rotation") or frame2 == {}) else (frame2.get("rotation",
-                                                                                                         0) - frame1[
-                                                                                                  "rotation"]) * delta
-        width_delta = 0 if (frame1["width"] == frame2.get("width") or frame2 == {}) else (frame2.get("width", 0) -
-                                                                                          frame1["width"]) * delta
-        height_delta = 0 if (frame1["height"] == frame2.get("height") or frame2 == {}) else (frame2.get("height", 0) -
-                                                                                             frame1["height"]) * delta
-        result = {
-            "id": res_id,
-            "type": res_type,
-            "value": {
-                res_type: label if isinstance(label, list) else [label],
-                "x": frame1["x"] + x_delta,
-                "y": frame1["y"] + y_delta,
-                "width": frame1["width"] + width_delta,
-                "height": frame1["height"] + height_delta,
-                "rotation": frame1["rotation"] + rot_delta,
-                "frame": frame_number
-            }
+        deltas = {}
+        for v in ["x", "y", "rotation", "width", "height"]:
+            deltas[v] = 0 if (frame1[v] == frame2.get(v) or not frame2) else (frame2.get(v, 0) - frame1[v]) * delta
+        result = deepcopy(res)
+        result["type"] = res_type
+        result["value"] = {
+            res_type: label if isinstance(label, list) else [label],
+            "x": frame1["x"] + deltas["x"],
+            "y": frame1["y"] + deltas["y"],
+            "width": frame1["width"] + deltas["width"],
+            "height": frame1["height"] + deltas["height"],
+            "rotation": frame1["rotation"] + deltas["rotation"],
+            "frame": frame_number,
         }
+        if frame_number not in [frame1.get('frame'), frame2.get('frame')]:
+            result["value"]["auto"] = True
+        if res["value"].get("from_name"):
+            result["value"]["from_name"] = res["value"].get("from_name")
         final_results.append(result)
     return final_results

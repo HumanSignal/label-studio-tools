@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(
     name='label-studio-tools',
-    version='0.0.1',
+    version='0.0.0.dev2',
     author='Heartex',
     author_email="hello@heartex.ai",
     description='Label studio common tools',
