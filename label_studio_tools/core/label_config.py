@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 _LABEL_TAGS = {'Label', 'Choice'}
 _NOT_CONTROL_TAGS = {'Filter',}
 _DIR_APP_NAME = 'label-studio'
-
+_VIDEO_TRACKING_TAGS = {'videorectangle'}
 
 def parse_config(config_string):
     """
@@ -93,3 +93,10 @@ def parse_config(config_string):
         tag_info['labels'] = list(labels[output_tag])
         tag_info['labels_attrs'] = labels[output_tag]
     return outputs
+
+
+def is_video_object_tracking(config_string):
+    config = parse_config(config_string)
+    for component in config:
+        if config[component]['type'].lower() in _VIDEO_TRACKING_TAGS:
+            return True
