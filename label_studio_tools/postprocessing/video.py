@@ -1,4 +1,5 @@
 from copy import deepcopy
+from label_studio_tools.core.label_config import _VIDEO_TRACKING_TAGS
 
 def extract_key_frames(results):
     """
@@ -8,36 +9,27 @@ def extract_key_frames(results):
     """
     final_results = []
     for result in results:
+        if result['type'].lower() not in _VIDEO_TRACKING_TAGS:
+            final_results.append(result)
+            continue
         sequence = result['value']['sequence']
         if len(sequence) < 1:
             continue
         label = result['value'].get('labels', [])
         sequence = sorted(sequence, key=lambda d: d['frame'])
-        if len(sequence) < 2:
-            element = sequence.pop()
-            final_results.extend(
-                _construct_result_from_frames(frame1=element,
-                                              frame2={},
-                                              res_type="rectanglelabels",
-                                              res=result,
-                                              label=label,
-                                              frameCount=result["value"].get("frameCount", 0),
-                                              exclude_first=False)
-            )
-        else:
-            exclude_first = False
-            for i in range(len(sequence)):
-                frame_a = sequence[i]
-                frame_b = {} if i == len(sequence) - 1 else sequence[i + 1]
-                final_results.extend(_construct_result_from_frames(frame1=frame_a,
-                                                                   frame2=frame_b,
-                                                                   res_type="rectanglelabels",
-                                                                   res=result,
-                                                                   label=label,
-                                                                   frameCount=result["value"].get("frameCount",
-                                                                                                  0),
-                                                                   exclude_first=exclude_first))
-                exclude_first = frame_a['enabled']
+        exclude_first = False
+        for i in range(len(sequence)):
+            frame_a = sequence[i]
+            frame_b = {} if i == len(sequence) - 1 else sequence[i + 1]
+            final_results.extend(_construct_result_from_frames(frame1=frame_a,
+                                                               frame2=frame_b,
+                                                               res_type="rectanglelabels",
+                                                               res=result,
+                                                               label=label,
+                                                               frameCount=result["value"].get("frameCount",
+                                                                                              0),
+                                                               exclude_first=exclude_first))
+            exclude_first = frame_a['enabled']
     return final_results
 
 
