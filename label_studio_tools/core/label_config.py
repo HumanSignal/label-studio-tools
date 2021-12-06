@@ -7,7 +7,7 @@ from label_studio_tools.core.utils.exceptions import LabelStudioXMLSyntaxErrorSe
 
 logger = logging.getLogger(__name__)
 
-_LABEL_TAGS = {'Label', 'Choice'}
+_LABEL_TAGS = {'Label', 'Choice', 'Relation'}
 _NOT_CONTROL_TAGS = {'Filter',}
 _DIR_APP_NAME = 'label-studio'
 _VIDEO_TRACKING_TAGS = {'videorectangle'}
