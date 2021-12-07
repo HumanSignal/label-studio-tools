@@ -95,8 +95,7 @@ def parse_config(config_string):
     return outputs
 
 
-def is_video_object_tracking(config_string):
-    config = parse_config(config_string)
-    for component in config:
-        if config[component]['type'].lower() in _VIDEO_TRACKING_TAGS:
+def is_video_object_tracking(parsed_config):
+    for component in parsed_config:
+        if parsed_config[component]['type'].lower() in _VIDEO_TRACKING_TAGS:
             return True

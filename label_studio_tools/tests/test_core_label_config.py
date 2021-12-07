@@ -24,7 +24,7 @@ def test_is_video_object_tracking():
     """
     Test is_video_object_tracking for video config
     """
-    label_config = '''
+    label_config = parse_config('''
                 <View>
               <Labels name="videoLabels" toName="video">
                 <Label value="Car"/>
@@ -32,7 +32,7 @@ def test_is_video_object_tracking():
               </Labels>
               <Video name="video" value="$video"/>
               <VideoRectangle name="box" toName="video"/>
-            </View>'''
+            </View>''')
     assert is_video_object_tracking(label_config)
 
 
@@ -40,7 +40,7 @@ def test_is_video_object_tracking_not_video():
     """
     Test is_video_object_tracking for Audio config
     """
-    label_config = '''
+    label_config = parse_config('''
                 <View>
                   <Header value="Listen to the audio"/>
                   <Audio name="audio" value="$audio"/>
@@ -52,5 +52,5 @@ def test_is_video_object_tracking_not_video():
                     <Choice value="Education"/>
                     <Choice value="Other"/>
                   </Choices>
-                </View>'''
+                </View>''')
     assert not is_video_object_tracking(label_config)
