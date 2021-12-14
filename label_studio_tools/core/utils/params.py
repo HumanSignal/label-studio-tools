@@ -37,3 +37,7 @@ def get_env(name, default=None, is_bool=False):
             else:
                 return value
     return default
+
+
+def get_bool_env(key, default):
+    return get_env(key, default, is_bool=True)
