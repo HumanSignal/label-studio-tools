@@ -18,13 +18,12 @@ def extract_key_frames(results):
             continue
         sequence = sorted(sequence, key=lambda d: d['frame'])
         exclude_first = False
-        temp['value']['sequence'] = []
         for i in range(len(sequence)):
             frame_a = sequence[i]
             frame_b = {} if i == len(sequence) - 1 else sequence[i + 1]
             temp['value']['sequence'].extend(_construct_result_from_frames(frame1=frame_a,
                                                                            frame2=frame_b,
-                                                                           frameCount=result["value"].get("frameCount",
+                                                                           frameCount=result["value"].get("framesCount",
                                                                                                           0),
                                                                            duration=result["value"].get("duration",
                                                                                                         0),
@@ -78,5 +77,5 @@ def _construct_result_from_frames(frame1,
             result["auto"] = True
             if deltas["time"] == 0 and duration > 0:
                 result["time"] = round(frame1["time"] + delta * (duration - frame1["time"]), 2)
-        final_results.append(result)
+            final_results.append(result)
     return final_results

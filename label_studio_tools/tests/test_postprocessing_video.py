@@ -1,5 +1,5 @@
 from label_studio_tools.postprocessing.video import extract_key_frames
-
+from operator import itemgetter
 
 def test_video_disabled_till_end():
     """
@@ -13,7 +13,7 @@ def test_video_disabled_till_end():
                 "labels": [
                     "Airplane"
                 ],
-                "frameCount": 10000000,
+                "framesCount": 10000000,
                 "sequence": [
                     {
                         "frame": 1,
@@ -43,6 +43,7 @@ def test_video_disabled_till_end():
     key_frames = extract_key_frames(example)
     assert len(key_frames[0]['value']['sequence']) == 5
     key_frames = key_frames[0]['value']['sequence']
+    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
     assert key_frames[0]['width'] == 41
@@ -78,7 +79,7 @@ def test_video_enabled_till_end():
                 "labels": [
                     "Airplane"
                 ],
-                "frameCount": 10,
+                "framesCount": 10,
                 "duration": 10.10,
                 "sequence": [
                     {
@@ -106,6 +107,7 @@ def test_video_enabled_till_end():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
+    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
@@ -162,7 +164,7 @@ def test_video_enabled_till_end_one_frame():
                     "Airplane",
                     "Test"
                 ],
-                "frameCount": 10,
+                "framesCount": 10,
                 "duration": 9,
                 "sequence": [
                     {
@@ -180,7 +182,7 @@ def test_video_enabled_till_end_one_frame():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    print(key_frames)
+    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
@@ -209,7 +211,7 @@ def test_video_disabled_till_end_one_frame():
                 "labels": [
                     "Airplane"
                 ],
-                "frameCount": 10,
+                "framesCount": 10,
                 "sequence": [
                     {
                         "frame": 1,
@@ -225,8 +227,7 @@ def test_video_disabled_till_end_one_frame():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    print(key_frames)
-    assert len(key_frames) == 0
+    assert len(key_frames) == 1
 
 
 def test_video_disabled_till_end_keyframe_count():
@@ -241,7 +242,7 @@ def test_video_disabled_till_end_keyframe_count():
                 "labels": [
                     "Airplane"
                 ],
-                "frameCount": 10000000,
+                "framesCount": 10000000,
                 "duration": 22,
                 "sequence": [
                     {
@@ -289,6 +290,7 @@ def test_video_disabled_till_end_keyframe_count():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
+    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[5]['x'] == 38
     assert key_frames[5]['y'] == 38
@@ -319,7 +321,7 @@ def test_no_label_result():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "frameCount": 10000000,
+                "framesCount": 10000000,
                 "sequence": [
                     {
                         "frame": 1,
@@ -366,6 +368,7 @@ def test_no_label_result():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
+    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[5]['x'] == 38
     assert key_frames[5]['y'] == 38
@@ -382,3 +385,65 @@ def test_no_label_result():
     assert key_frames[7]['width'] == 41
     assert key_frames[7]['height'] == 22
     assert key_frames[7]['rotation'] == 0
+
+
+def test_case_with_1_frame_inside_2_span():
+    example = [
+        {
+          "id": "XgRSxLA2GG",
+          "type": "videorectangle",
+          "value": {
+            "labels": [
+              "Woman"
+            ],
+            "sequence": [
+              {
+                "x": -0.818330605564648,
+                "y": -0.3364248045099079,
+                "time": 0.08,
+                "frame": 2,
+                "width": 18.494271685761046,
+                "height": 50.3364248045099,
+                "enabled": True,
+                "rotation": 0
+              },
+              {
+                "x": 81.66939443535188,
+                "y": 49.70903800691037,
+                "time": 0.4,
+                "frame": 10,
+                "width": 18.494271685761046,
+                "height": 50.3364248045099,
+                "enabled": False,
+                "rotation": 0
+              },
+              {
+                "x": 43.53518821603928,
+                "y": 31.378432442262238,
+                "time": 0.52,
+                "frame": 13,
+                "width": 18.494271685761046,
+                "height": 50.3364248045099,
+                "enabled": False,
+                "rotation": 0
+              },
+              {
+                "x": -1.4729950900163666,
+                "y": 50,
+                "time": 0.64,
+                "frame": 16,
+                "width": 18.494271685761046,
+                "height": 50.3364248045099,
+                "enabled": True,
+                "rotation": 0
+              }
+            ],
+            "framesCount": 299
+          },
+          "origin": "manual",
+          "to_name": "video",
+          "from_name": "box"
+        }
+      ]
+    key_frames = extract_key_frames(example)[0]['value']['sequence']
+    assert len(key_frames) == 294
