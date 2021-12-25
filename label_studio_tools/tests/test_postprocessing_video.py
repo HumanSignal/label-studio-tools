@@ -1,5 +1,5 @@
 from label_studio_tools.postprocessing.video import extract_key_frames
-from operator import itemgetter
+
 
 def test_video_disabled_till_end():
     """
@@ -43,7 +43,6 @@ def test_video_disabled_till_end():
     key_frames = extract_key_frames(example)
     assert len(key_frames[0]['value']['sequence']) == 5
     key_frames = key_frames[0]['value']['sequence']
-    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
     assert key_frames[0]['width'] == 41
@@ -107,7 +106,6 @@ def test_video_enabled_till_end():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
@@ -182,7 +180,6 @@ def test_video_enabled_till_end_one_frame():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[0]['x'] == 38
     assert key_frames[0]['y'] == 38
@@ -290,7 +287,6 @@ def test_video_disabled_till_end_keyframe_count():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[5]['x'] == 38
     assert key_frames[5]['y'] == 38
@@ -368,7 +364,6 @@ def test_no_label_result():
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
-    key_frames = sorted(key_frames, key=itemgetter('frame'))
     assert len(key_frames) == 10
     assert key_frames[5]['x'] == 38
     assert key_frames[5]['y'] == 38
