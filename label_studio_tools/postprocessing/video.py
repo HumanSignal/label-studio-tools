@@ -1,11 +1,14 @@
 from copy import deepcopy
+from operator import itemgetter
+
 from label_studio_tools.core.label_config import _VIDEO_TRACKING_TAGS
+
 
 def extract_key_frames(results):
     """
     Extract frames from key frames from video annotation results
     :param results: Annotation results
-    :return: Frames in LS rectanglelabels format
+    :return: Frames in LS format
     """
     final_results = []
     for result in results:
@@ -29,6 +32,7 @@ def extract_key_frames(results):
                                                                                                         0),
                                                                            exclude_first=exclude_first))
             exclude_first = frame_a['enabled']
+        temp['value']['sequence'] = sorted(temp['value']['sequence'], key=itemgetter('frame'))
         final_results.append(temp)
     return final_results
 
