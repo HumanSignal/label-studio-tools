@@ -1,5 +1,6 @@
 import logging
 import io
+import shutil
 import urllib
 import hashlib
 import requests
@@ -25,7 +26,24 @@ def get_cache_dir():
     return cache_dir
 
 
-def get_local_path(url, cache_dir=None, project_dir=None, hostname=None, image_dir=None, access_token=None):
+def get_local_path(url,
+                   cache_dir=None,
+                   project_dir=None,
+                   hostname=None,
+                   image_dir=None,
+                   access_token=None,
+                   download_resources=True):
+    """
+    Get local path for url
+    :param url: File url
+    :param cache_dir: Cache directory to download or copy files
+    :param project_dir: Project directory
+    :param hostname: Hostname for external resource
+    :param image_dir: Image directory
+    :param access_token: Access token for external resource (e.g. LS backend)
+    :param download_resources: Download external files
+    :return: filepath
+    """
     is_local_file = url.startswith('/data/') and '?d=' in url
     is_uploaded_file = url.startswith('/data/upload')
     if image_dir is None:
@@ -46,6 +64,8 @@ def get_local_path(url, cache_dir=None, project_dir=None, hostname=None, image_d
         project_id = url.split("/")[-2]  # To retrieve project_id
         image_dir = os.path.join(image_dir, project_id)
         filepath = os.path.join(image_dir, os.path.basename(url))
+        if cache_dir and download_resources:
+            shutil.copy(filepath, cache_dir)
         return filepath
 
     elif is_uploaded_file and hostname:
@@ -66,9 +86,10 @@ def get_local_path(url, cache_dir=None, project_dir=None, hostname=None, image_d
     filepath = os.path.join(cache_dir, url_hash + '__' + url_filename)
     if not os.path.exists(filepath):
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
-        headers = {'Authorization': 'Token ' + access_token} if access_token else {}
-        r = requests.get(url, stream=True, headers=headers)
-        r.raise_for_status()
-        with io.open(filepath, mode='wb') as fout:
-            fout.write(r.content)
+        if download_resources:
+            headers = {'Authorization': 'Token ' + access_token} if access_token else {}
+            r = requests.get(url, stream=True, headers=headers)
+            r.raise_for_status()
+            with io.open(filepath, mode='wb') as fout:
+                fout.write(r.content)
     return filepath
