@@ -8,6 +8,8 @@ import os
 
 from appdirs import user_cache_dir, user_data_dir
 from urllib.parse import urlparse
+from contextlib import contextmanager
+from tempfile import mkdtemp
 
 _DIR_APP_NAME = 'label-studio'
 
@@ -93,3 +95,19 @@ def get_local_path(url,
             with io.open(filepath, mode='wb') as fout:
                 fout.write(r.content)
     return filepath
+
+
+@contextmanager
+def get_temp_dir():
+    dirpath = mkdtemp()
+    yield dirpath
+    shutil.rmtree(dirpath)
+
+
+def get_all_files_from_dir(d):
+    out = []
+    for name in os.listdir(d):
+        filepath = os.path.join(d, name)
+        if os.path.isfile(filepath):
+            out.append(filepath)
+    return out
