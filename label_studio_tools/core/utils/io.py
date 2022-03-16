@@ -54,8 +54,8 @@ def get_local_path(url,
 
     # File reference created with --allow-serving-local-files option
     if is_local_file:
-        filename, dir_path = url.split('/data/')[1].split('?d=')
-        dir_path = str(urllib.parse.unquote(dir_path))
+        dir_path, filename = url.split('/data/')[1].split('?d=')
+        filename = str(urllib.parse.unquote(filename))
         filepath = os.path.join(dir_path, filename)
         if not os.path.exists(filepath):
             raise FileNotFoundError(filepath)
