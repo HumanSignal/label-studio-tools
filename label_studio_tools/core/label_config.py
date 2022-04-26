@@ -12,6 +12,7 @@ _NOT_CONTROL_TAGS = {'Filter',}
 _DIR_APP_NAME = 'label-studio'
 _VIDEO_TRACKING_TAGS = {'videorectangle'}
 
+
 def parse_config(config_string):
     """
     :param config_string: Label config string
