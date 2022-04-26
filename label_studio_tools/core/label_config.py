@@ -67,6 +67,8 @@ def parse_config(config_string):
                     conditionals = {'type': 'choice', 'name': tag.attrib['whenChoiceValue']}
             if conditionals:
                 tag_info['conditionals'] = conditionals
+            if tag.attrib.get("value") == "$options":
+                tag_info['dynamic_labels'] = True
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
             inputs[tag.attrib['name']] = {'type': tag.tag, 'value': tag.attrib['value'].lstrip('$')}
