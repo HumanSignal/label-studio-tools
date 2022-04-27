@@ -54,3 +54,36 @@ def test_is_video_object_tracking_not_video():
                   </Choices>
                 </View>''')
     assert not is_video_object_tracking(label_config)
+
+
+def test_dynamic_labels_parse_config():
+    """
+    Test adding dynamic_labels to outputs
+    """
+    outputs = parse_config('''
+                <View>
+                  <Header value="Select label and click the image to start"/>
+                  <Image name="image" value="$image" zoom="true"/>
+                  <PolygonLabels name="label" toName="image"
+                                 strokeWidth="3" pointSize="small"
+                                 opacity="0.9" value="$options"    
+                  />
+                </View>''')
+    assert outputs['label']['dynamic_labels']
+
+
+def test_no_dynamic_labels_parse_config():
+    """
+    Test not adding dynamic_labels to outputs
+    """
+    outputs = parse_config('''
+                <View>
+                  <Header value="Select label and click the image to start"/>
+                  <Image name="image" value="$image" zoom="true"/>
+                  <PolygonLabels name="label" toName="image"
+                                 strokeWidth="3" pointSize="small"
+                                 opacity="0.9"    
+                  />
+                </View>''')
+    assert outputs['label']
+    assert outputs['label'].get("dynamic_labels") is None
