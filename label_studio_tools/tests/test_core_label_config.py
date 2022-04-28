@@ -1,4 +1,4 @@
-from label_studio_tools.core.label_config import parse_config, is_video_object_tracking
+from label_studio_tools.core.label_config import parse_config, is_video_object_tracking, has_variable
 
 
 def test_parsing_label_config():
@@ -87,3 +87,31 @@ def test_no_dynamic_labels_parse_config():
                 </View>''')
     assert outputs['label']
     assert outputs['label'].get("dynamic_labels") is None
+
+
+def test_label_config_has_variables():
+    """
+    Test has_variable method
+    """
+    assert has_variable("$options")
+    assert has_variable("$labels_")
+    assert not has_variable(" $notlabels")
+    assert not has_variable("$selections ")
+    assert not has_variable(" $size ")
+
+
+def test_not_dynamic_labels_parse_config():
+    """
+    Test not adding dynamic_labels to outputs
+    """
+    outputs = parse_config('''
+                <View>
+                  <Header value="Select label and click the image to start"/>
+                  <Image name="image" value="$image" zoom="true"/>
+                  <PolygonLabels name="label" toName="image"
+                                 strokeWidth="3" pointSize="small"
+                                 opacity="0.9"    
+                  />
+                </View>''')
+    assert not outputs['label'].get('dynamic_labels', False)
+    assert 'dynamic_labels' not in outputs['label']
