@@ -59,7 +59,7 @@ def get_local_path(url,
     if is_local_file:
         filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
         dir_path = str(urllib.parse.unquote(dir_path))
-        filepath = os.path.join(dir_path, LOCAL_FILES_DOCUMENT_ROOT)
+        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
         if not os.path.exists(filepath):
             raise FileNotFoundError(filepath)
         return filepath
