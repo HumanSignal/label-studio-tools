@@ -11,7 +11,10 @@ from urllib.parse import urlparse
 from contextlib import contextmanager
 from tempfile import mkdtemp
 
+from label_studio_tools.core.utils.params import get_env
+
 _DIR_APP_NAME = 'label-studio'
+LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
 
 logger = logging.getLogger(__name__)
 
@@ -54,9 +57,9 @@ def get_local_path(url,
 
     # File reference created with --allow-serving-local-files option
     if is_local_file:
-        dir_path, filename = url.split('/data/')[1].split('?d=')
-        filename = str(urllib.parse.unquote(filename))
-        filepath = os.path.join(dir_path, filename)
+        filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
+        dir_path = str(urllib.parse.unquote(dir_path))
+        filepath = os.path.join(dir_path, LOCAL_FILES_DOCUMENT_ROOT)
         if not os.path.exists(filepath):
             raise FileNotFoundError(filepath)
         return filepath
