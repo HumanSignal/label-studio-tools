@@ -5,7 +5,7 @@ import os
 readme_file = os.path.join(os.path.dirname(__file__), 'README.md')
 with open(readme_file, 'r') as f:
     long_description = f.read()
-    
+
 # Module dependencies
 requirements_file = os.path.join(os.path.dirname(__file__), 'requirements.txt')
 with open(requirements_file, 'r') as f:
