@@ -1,5 +1,4 @@
 from label_studio_tools.core.label_config import parse_config, is_video_object_tracking, has_variable
-from label_studio_tools.core.utils.io import get_local_path
 
 def test_parsing_label_config():
     """
