@@ -1,4 +1,5 @@
 import logging
+import re
 
 from collections import defaultdict
 from lxml import etree
@@ -31,23 +32,6 @@ def parse_config(config_string):
     if not config_string:
         return {}
 
-    def _is_input_tag(tag):
-        return tag.attrib.get('name') and tag.attrib.get('value')
-
-    def _is_output_tag(tag):
-        return tag.attrib.get('name') and tag.attrib.get('toName') and tag.tag not in _NOT_CONTROL_TAGS
-
-    def _get_parent_output_tag_name(tag, outputs):
-        # Find parental <Choices> tag for nested tags like <Choices><View><View><Choice>...
-        parent = tag
-        while True:
-            parent = parent.getparent()
-            if parent is None:
-                return
-            name = parent.attrib.get('name')
-            if name in outputs:
-                return name
-
     try:
         xml_tree = etree.fromstring(config_string)
     except etree.XMLSyntaxError as e:
@@ -79,6 +63,8 @@ def parse_config(config_string):
                     conditionals = {'type': 'choice', 'name': tag.attrib['whenChoiceValue']}
             if conditionals:
                 tag_info['conditionals'] = conditionals
+            if has_variable(tag.attrib.get("value", "")):
+                tag_info['dynamic_labels'] = True
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
             inputs[tag.attrib['name']] = {'type': tag.tag, 'value': tag.attrib['value'].lstrip('$')}
@@ -111,3 +97,43 @@ def is_video_object_tracking(parsed_config):
     for component in parsed_config:
         if parsed_config[component]['type'].lower() in _VIDEO_TRACKING_TAGS:
             return True
+
+
+def has_variable(actual_value):
+    """
+    Check if value has variable
+    :param actual_value: value to check
+    :return: True if value has variable
+    """
+    expression = "^\$[A-Za-z_]+$"
+    pattern = re.compile(expression)
+    full_match = pattern.fullmatch(actual_value)
+    if full_match:
+        return True
+    return False
+
+
+def _is_input_tag(tag):
+    """
+    Check if tag is input
+    """
+    return tag.attrib.get('name') and tag.attrib.get('value')
+
+
+def _is_output_tag(tag):
+    """
+    Check if tag is output
+    """
+    return tag.attrib.get('name') and tag.attrib.get('toName') and tag.tag not in _NOT_CONTROL_TAGS
+
+
+def _get_parent_output_tag_name(tag, outputs):
+    # Find parental <Choices> tag for nested tags like <Choices><View><View><Choice>...
+    parent = tag
+    while True:
+        parent = parent.getparent()
+        if parent is None:
+            return
+        name = parent.attrib.get('name')
+        if name in outputs:
+            return name

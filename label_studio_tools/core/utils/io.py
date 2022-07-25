@@ -8,8 +8,13 @@ import os
 
 from appdirs import user_cache_dir, user_data_dir
 from urllib.parse import urlparse
+from contextlib import contextmanager
+from tempfile import mkdtemp
+
+from label_studio_tools.core.utils.params import get_env
 
 _DIR_APP_NAME = 'label-studio'
+LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
 
 logger = logging.getLogger(__name__)
 
@@ -52,9 +57,9 @@ def get_local_path(url,
 
     # File reference created with --allow-serving-local-files option
     if is_local_file:
-        filename, dir_path = url.split('/data/')[1].split('?d=')
+        filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
         dir_path = str(urllib.parse.unquote(dir_path))
-        filepath = os.path.join(dir_path, filename)
+        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
         if not os.path.exists(filepath):
             raise FileNotFoundError(filepath)
         return filepath
@@ -93,3 +98,19 @@ def get_local_path(url,
             with io.open(filepath, mode='wb') as fout:
                 fout.write(r.content)
     return filepath
+
+
+@contextmanager
+def get_temp_dir():
+    dirpath = mkdtemp()
+    yield dirpath
+    shutil.rmtree(dirpath)
+
+
+def get_all_files_from_dir(d):
+    out = []
+    for name in os.listdir(d):
+        filepath = os.path.join(d, name)
+        if os.path.isfile(filepath):
+            out.append(filepath)
+    return out
