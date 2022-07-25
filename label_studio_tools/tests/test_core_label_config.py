@@ -1,5 +1,6 @@
 from label_studio_tools.core.label_config import parse_config, is_video_object_tracking, has_variable
 
+
 def test_parsing_label_config():
     """
     Test frames extraction with disabled in the end and frame count > disabled key frame
