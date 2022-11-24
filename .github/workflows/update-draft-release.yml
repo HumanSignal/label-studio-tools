@@ -31,7 +31,21 @@ jobs:
             const target_commitish = '${{ github.ref_name }}';
             let version = target_commitish.replace('${{ env.RELEASE_BRANCH_PREFIX }}', '')
             core.setOutput("rc-version", `${version}rc${{ github.run_id }}`);
+            const regexp = '^[v]?([0-9]+)\.([0-9]+)\.([0-9]+)(\.post([0-9]+))?$';
             
+            function compareVersions(a, b) {
+              if (a[1] === b[1])
+                if (a[2] === b[2])
+                  if (a[3] === b[3])
+                    return (+a[5] || -1) - (+b[5] || -1)
+                  else
+                    return +a[3] - b[3]
+                else
+                  return +a[2] - b[2]
+              else
+                return +a[1] - b[1]
+            }
+
             const {data: releases} = await github.rest.repos.listReleases({
                 owner,
                 repo,
@@ -69,6 +83,27 @@ jobs:
                     version = `${version}.post${newHotfixNumber}`
                 }
                 console.log(`New version: ${version}`)
+                
+                const rawTags = tags.map(e => e.name) 
+                const tagsWithNew = [...rawTags, version]
+                
+                const sortedTags = tagsWithNew
+                  .filter(e => e.match(regexp))
+                  .map((e => e.match(regexp)))
+                  .sort(compareVersions)
+                  .reverse()
+                  .map(e => e[0])
+                
+                const previousTag = sortedTags[sortedTags.indexOf(version)+1]
+                console.log(`Previous version: ${previousTag}`)
+
+                const {data: release_notes} = await github.rest.repos.generateReleaseNotes({
+                  owner,
+                  repo,
+                  tag_name: version,
+                  previous_tag_name: previousTag,
+                });
+                
                 const {data: newDraftRelease} = await github.rest.repos.createRelease({
                     owner,
                     repo,
@@ -77,7 +112,7 @@ jobs:
                     name: version,
                     tag_name: version,
                     target_commitish: target_commitish,
-                    generate_release_notes: true,
+                    body: release_notes.body,
                 });
                 console.log(`Draft release is created ${newDraftRelease.html_url}`)
                 release = newDraftRelease;
