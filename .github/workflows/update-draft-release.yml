@@ -51,7 +51,8 @@ jobs:
             
             const versionMatch = version.match(regexp)
             if (!versionMatch) {
-              core.Error(`Version ${version} from branch ${target_commitish} does not match the regexp ${regexp}`)
+              core.setFailed(`Version "${version}" from branch "${target_commitish}" does not match the regexp ${regexp}`)
+              process.exit()
             }
 
             const {data: tags} = await github.rest.repos.listTags({
