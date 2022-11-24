@@ -122,14 +122,20 @@ jobs:
               previous_tag_name: previousTag,
               target_commitish: target_commitish,
             });
-            const {data: release_notes} = await github.rest.repos.updateRelease({
+            const {data: updated_release} = await github.rest.repos.updateRelease({
               owner,
               repo,
               release_id: release.id,
+              draft: true,
+              prerelease: false,
+              name: version,
+              tag_name: version,
+              target_commitish: target_commitish,
               body: release_notes.body
             });
-            
-            core.setOutput("id", release.id);
+            console.log(`Draft release is updated ${updated_release.html_url}`)
+
+            core.setOutput("id", updated_release.id);
             core.setOutput("tag_name", release.tag_name);
 
   build-pypi:
