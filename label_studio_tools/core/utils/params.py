@@ -2,7 +2,7 @@ import os
 
 
 def bool_from_request(params, key, default):
-    """ Get boolean value from request GET, POST, etc
+    """Get boolean value from request GET, POST, etc
     :param params: dict POST, GET, etc
     :param key: key to find
     :param default: default value
@@ -23,8 +23,10 @@ def cast_bool_from_str(value):
         elif value.lower() in ['false', 'no', 'not', 'off', '0']:
             value = False
         else:
-            raise ValueError(f'Incorrect bool value "{value}". '
-                             f'It should be one of [1, 0, true, false, yes, no]')
+            raise ValueError(
+                f'Incorrect bool value "{value}". '
+                f'It should be one of [1, 0, true, false, yes, no]'
+            )
     return value
 
 

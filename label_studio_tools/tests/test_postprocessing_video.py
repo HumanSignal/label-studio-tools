@@ -10,9 +10,7 @@ def test_video_disabled_till_end():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "labels": [
-                    "Airplane"
-                ],
+                "labels": ["Airplane"],
                 "framesCount": 10000000,
                 "sequence": [
                     {
@@ -23,7 +21,7 @@ def test_video_disabled_till_end():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 1.22
+                        "time": 1.22,
                     },
                     {
                         "frame": 5,
@@ -33,11 +31,11 @@ def test_video_disabled_till_end():
                         "width": 56,
                         "height": 34,
                         "rotation": 30,
-                        "time": 3.44
-                    }
+                        "time": 3.44,
+                    },
                 ],
-                "from_name": "test"
-            }
+                "from_name": "test",
+            },
         }
     ]
     key_frames = extract_key_frames(example)
@@ -75,9 +73,7 @@ def test_video_enabled_till_end():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "labels": [
-                    "Airplane"
-                ],
+                "labels": ["Airplane"],
                 "framesCount": 10,
                 "duration": 10.10,
                 "sequence": [
@@ -89,7 +85,7 @@ def test_video_enabled_till_end():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 1.01
+                        "time": 1.01,
                     },
                     {
                         "frame": 5,
@@ -99,10 +95,10 @@ def test_video_enabled_till_end():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 5.05
-                    }
-                ]
-            }
+                        "time": 5.05,
+                    },
+                ],
+            },
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
@@ -158,10 +154,7 @@ def test_video_enabled_till_end_one_frame():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "labels": [
-                    "Airplane",
-                    "Test"
-                ],
+                "labels": ["Airplane", "Test"],
                 "framesCount": 10,
                 "duration": 9,
                 "sequence": [
@@ -175,8 +168,8 @@ def test_video_enabled_till_end_one_frame():
                         "rotation": 0,
                         "time": 1,
                     }
-                ]
-            }
+                ],
+            },
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
@@ -205,9 +198,7 @@ def test_video_disabled_till_end_one_frame():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "labels": [
-                    "Airplane"
-                ],
+                "labels": ["Airplane"],
                 "framesCount": 10,
                 "sequence": [
                     {
@@ -217,10 +208,10 @@ def test_video_disabled_till_end_one_frame():
                         "y": 38,
                         "width": 41,
                         "height": 22,
-                        "rotation": 0
+                        "rotation": 0,
                     }
-                ]
-            }
+                ],
+            },
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
@@ -236,9 +227,7 @@ def test_video_disabled_till_end_keyframe_count():
             "id": "tJhYZLMC9G",
             "type": "videorectangle",
             "value": {
-                "labels": [
-                    "Airplane"
-                ],
+                "labels": ["Airplane"],
                 "framesCount": 10000000,
                 "duration": 22,
                 "sequence": [
@@ -250,7 +239,7 @@ def test_video_disabled_till_end_keyframe_count():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 1
+                        "time": 1,
                     },
                     {
                         "frame": 5,
@@ -260,7 +249,7 @@ def test_video_disabled_till_end_keyframe_count():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 5
+                        "time": 5,
                     },
                     {
                         "frame": 11,
@@ -270,7 +259,7 @@ def test_video_disabled_till_end_keyframe_count():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 11
+                        "time": 11,
                     },
                     {
                         "frame": 15,
@@ -280,10 +269,10 @@ def test_video_disabled_till_end_keyframe_count():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 15
-                    }
-                ]
-            }
+                        "time": 15,
+                    },
+                ],
+            },
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
@@ -327,7 +316,7 @@ def test_no_label_result():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 1.01
+                        "time": 1.01,
                     },
                     {
                         "frame": 5,
@@ -337,7 +326,7 @@ def test_no_label_result():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 1.55
+                        "time": 1.55,
                     },
                     {
                         "frame": 11,
@@ -347,7 +336,7 @@ def test_no_label_result():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 2.02
+                        "time": 2.02,
                     },
                     {
                         "frame": 15,
@@ -357,10 +346,10 @@ def test_no_label_result():
                         "width": 41,
                         "height": 22,
                         "rotation": 0,
-                        "time": 3.10
-                    }
-                ]
-            }
+                        "time": 3.10,
+                    },
+                ],
+            },
         }
     ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
@@ -385,60 +374,58 @@ def test_no_label_result():
 def test_case_with_1_frame_inside_2_span():
     example = [
         {
-          "id": "XgRSxLA2GG",
-          "type": "videorectangle",
-          "value": {
-            "labels": [
-              "Woman"
-            ],
-            "sequence": [
-              {
-                "x": -0.818330605564648,
-                "y": -0.3364248045099079,
-                "time": 0.08,
-                "frame": 2,
-                "width": 18.494271685761046,
-                "height": 50.3364248045099,
-                "enabled": True,
-                "rotation": 0
-              },
-              {
-                "x": 81.66939443535188,
-                "y": 49.70903800691037,
-                "time": 0.4,
-                "frame": 10,
-                "width": 18.494271685761046,
-                "height": 50.3364248045099,
-                "enabled": False,
-                "rotation": 0
-              },
-              {
-                "x": 43.53518821603928,
-                "y": 31.378432442262238,
-                "time": 0.52,
-                "frame": 13,
-                "width": 18.494271685761046,
-                "height": 50.3364248045099,
-                "enabled": False,
-                "rotation": 0
-              },
-              {
-                "x": -1.4729950900163666,
-                "y": 50,
-                "time": 0.64,
-                "frame": 16,
-                "width": 18.494271685761046,
-                "height": 50.3364248045099,
-                "enabled": True,
-                "rotation": 0
-              }
-            ],
-            "framesCount": 299
-          },
-          "origin": "manual",
-          "to_name": "video",
-          "from_name": "box"
+            "id": "XgRSxLA2GG",
+            "type": "videorectangle",
+            "value": {
+                "labels": ["Woman"],
+                "sequence": [
+                    {
+                        "x": -0.818330605564648,
+                        "y": -0.3364248045099079,
+                        "time": 0.08,
+                        "frame": 2,
+                        "width": 18.494271685761046,
+                        "height": 50.3364248045099,
+                        "enabled": True,
+                        "rotation": 0,
+                    },
+                    {
+                        "x": 81.66939443535188,
+                        "y": 49.70903800691037,
+                        "time": 0.4,
+                        "frame": 10,
+                        "width": 18.494271685761046,
+                        "height": 50.3364248045099,
+                        "enabled": False,
+                        "rotation": 0,
+                    },
+                    {
+                        "x": 43.53518821603928,
+                        "y": 31.378432442262238,
+                        "time": 0.52,
+                        "frame": 13,
+                        "width": 18.494271685761046,
+                        "height": 50.3364248045099,
+                        "enabled": False,
+                        "rotation": 0,
+                    },
+                    {
+                        "x": -1.4729950900163666,
+                        "y": 50,
+                        "time": 0.64,
+                        "frame": 16,
+                        "width": 18.494271685761046,
+                        "height": 50.3364248045099,
+                        "enabled": True,
+                        "rotation": 0,
+                    },
+                ],
+                "framesCount": 299,
+            },
+            "origin": "manual",
+            "to_name": "video",
+            "from_name": "box",
         }
-      ]
+    ]
     key_frames = extract_key_frames(example)[0]['value']['sequence']
     assert len(key_frames) == 294

@@ -14,7 +14,9 @@ from tempfile import mkdtemp
 from label_studio_tools.core.utils.params import get_env
 
 _DIR_APP_NAME = 'label-studio'
-LOCAL_FILES_DOCUMENT_ROOT = get_env('LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep))
+LOCAL_FILES_DOCUMENT_ROOT = get_env(
+    'LOCAL_FILES_DOCUMENT_ROOT', default=os.path.abspath(os.sep)
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,13 +33,15 @@ def get_cache_dir():
     return cache_dir
 
 
-def get_local_path(url,
-                   cache_dir=None,
-                   project_dir=None,
-                   hostname=None,
-                   image_dir=None,
-                   access_token=None,
-                   download_resources=True):
+def get_local_path(
+    url,
+    cache_dir=None,
+    project_dir=None,
+    hostname=None,
+    image_dir=None,
+    access_token=None,
+    download_resources=True,
+):
     """
     Get local path for url
     :param url: File url
@@ -78,10 +82,14 @@ def get_local_path(url,
         logger.info('Resolving url using hostname [' + hostname + '] from LSB: ' + url)
 
     elif is_uploaded_file:
-        raise FileNotFoundError("Can't resolve url, neither hostname or project_dir passed: " + url)
+        raise FileNotFoundError(
+            "Can't resolve url, neither hostname or project_dir passed: " + url
+        )
 
     if is_uploaded_file and not access_token:
-        raise FileNotFoundError("Can't access file, no access_token provided for Label Studio Backend")
+        raise FileNotFoundError(
+            "Can't access file, no access_token provided for Label Studio Backend"
+        )
 
     # File specified by remote URL - download and cache it
     cache_dir = cache_dir or get_cache_dir()

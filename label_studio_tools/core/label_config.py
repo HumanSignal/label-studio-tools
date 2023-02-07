@@ -4,18 +4,25 @@ import re
 from collections import defaultdict
 from lxml import etree
 
-from label_studio_tools.core.utils.exceptions import LabelStudioXMLSyntaxErrorSentryIgnored
+from label_studio_tools.core.utils.exceptions import (
+    LabelStudioXMLSyntaxErrorSentryIgnored,
+)
 
 logger = logging.getLogger(__name__)
 
 _LABEL_TAGS = {'Label', 'Choice', 'Relation'}
-_NOT_CONTROL_TAGS = {'Filter',}
+_NOT_CONTROL_TAGS = {
+    'Filter',
+}
 _DIR_APP_NAME = 'label-studio'
 _VIDEO_TRACKING_TAGS = {'videorectangle'}
 
 
 def parse_config(config_string):
-    """
+    """Parse a given Label Studio labeling configuration and return a structured version of the configuration.
+    Useful for formatting results for predicted annotations and determining the type(s) of ML models that might
+    be relevant to the labeling project.
+
     :param config_string: Label config string
     :return: structured config of the form:
     {
@@ -26,7 +33,7 @@ def parse_config(config_string):
                 {"type": "ObjectTag1", "value": "<ObjectTag1>.value"},
                 {"type": "ObjectTag2", "value": "<ObjectTag2>.value"}
             ],
-            "labels": ["Label1", "Label2", "Label3"] // taken from "alias" if exists or "value"
+            "labels": ["Label1", "Label2", "Label3"] // taken from "alias" if it exists, else "value"
     }
     """
     if not config_string:
@@ -58,16 +65,25 @@ def parse_config(config_string):
                 if tag.attrib.get('whenTagName'):
                     conditionals = {'type': 'tag', 'name': tag.attrib['whenTagName']}
                 elif tag.attrib.get('whenLabelValue'):
-                    conditionals = {'type': 'label', 'name': tag.attrib['whenLabelValue']}
+                    conditionals = {
+                        'type': 'label',
+                        'name': tag.attrib['whenLabelValue'],
+                    }
                 elif tag.attrib.get('whenChoiceValue'):
-                    conditionals = {'type': 'choice', 'name': tag.attrib['whenChoiceValue']}
+                    conditionals = {
+                        'type': 'choice',
+                        'name': tag.attrib['whenChoiceValue'],
+                    }
             if conditionals:
                 tag_info['conditionals'] = conditionals
             if has_variable(tag.attrib.get("value", "")):
                 tag_info['dynamic_labels'] = True
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
-            inputs[tag.attrib['name']] = {'type': tag.tag, 'value': tag.attrib['value'].lstrip('$')}
+            inputs[tag.attrib['name']] = {
+                'type': tag.tag,
+                'value': tag.attrib['value'].lstrip('$'),
+            }
         if tag.tag not in _LABEL_TAGS:
             continue
         parent_name = _get_parent_output_tag_name(tag, outputs)
@@ -76,7 +92,9 @@ def parse_config(config_string):
             if not actual_value:
                 logger.debug(
                     'Inspecting tag {tag_name}... found no "value" or "alias" attributes.'.format(
-                        tag_name=etree.tostring(tag, encoding='unicode').strip()[:50]))
+                        tag_name=etree.tostring(tag, encoding='unicode').strip()[:50]
+                    )
+                )
             else:
                 labels[parent_name][actual_value] = dict(tag.attrib)
     for output_tag, tag_info in outputs.items():
@@ -85,7 +103,8 @@ def parse_config(config_string):
             if input_tag_name not in inputs:
                 logger.info(
                     f'to_name={input_tag_name} is specified for output tag name={output_tag}, '
-                    'but we can\'t find it among input tags')
+                    'but we can\'t find it among input tags'
+                )
                 continue
             tag_info['inputs'].append(inputs[input_tag_name])
         tag_info['labels'] = list(labels[output_tag])
@@ -124,7 +143,11 @@ def _is_output_tag(tag):
     """
     Check if tag is output
     """
-    return tag.attrib.get('name') and tag.attrib.get('toName') and tag.tag not in _NOT_CONTROL_TAGS
+    return (
+        tag.attrib.get('name')
+        and tag.attrib.get('toName')
+        and tag.tag not in _NOT_CONTROL_TAGS
+    )
 
 
 def _get_parent_output_tag_name(tag, outputs):
