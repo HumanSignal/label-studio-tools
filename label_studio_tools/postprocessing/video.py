@@ -65,7 +65,7 @@ def _construct_result_from_frames(
     start_i = 1 if exclude_first else 0
     for i in range(start_i, frame_count):
         frame_number = i + frame1['frame']
-        delta = i / (frame_count - 1)
+        delta = i / max(1, (frame_count - 1))
         deltas = {}
         for v in ["x", "y", "rotation", "width", "height", "time"]:
             deltas[v] = (
