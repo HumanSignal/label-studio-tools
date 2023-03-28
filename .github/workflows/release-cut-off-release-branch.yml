@@ -20,6 +20,10 @@ jobs:
   draft-new-release:
     name: "Cut off release branch"
     runs-on: ubuntu-latest
+    outputs:
+      next_develop_version: ${{ steps.calculate_branch_name_and_version.outputs.next_develop_version }}
+      release_version: ${{ steps.calculate_branch_name_and_version.outputs.release_version }}
+      release_branch: ${{ steps.calculate_branch_name_and_version.outputs.release_branch }}
     permissions:
       contents: write
       pull-requests: write
