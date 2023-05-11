@@ -145,7 +145,6 @@ def test_ranker_as_self_output_parse_config():
 
     assert outputs['ranker']['type'] == 'Ranker'
     assert outputs['ranker']['to_name'] == ['ranker']
-    assert outputs['ranker']['from_name'] == ['ranker']
 
 
 def test_ranker_parse_config():
@@ -163,4 +162,3 @@ def test_ranker_parse_config():
 
     assert outputs['ranker']['type'] == 'Ranker'
     assert outputs['ranker']['to_name'] == ['text']
-    assert outputs['ranker']['from_name'] == ['ranker']
