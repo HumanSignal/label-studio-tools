@@ -11,6 +11,7 @@ from label_studio_tools.core.utils.exceptions import (
 logger = logging.getLogger(__name__)
 
 _LABEL_TAGS = {'Label', 'Choice', 'Relation'}
+_HYBRID_TAGS = {'Ranker'}
 _NOT_CONTROL_TAGS = {
     'Filter',
 }
@@ -50,7 +51,11 @@ def parse_config(config_string):
         if tag.attrib and 'indexFlag' in tag.attrib:
             variables.append(tag.attrib['indexFlag'])
         if _is_output_tag(tag):
-            tag_info = {'type': tag.tag, 'to_name': tag.attrib['toName'].split(',')}
+            tag_info = {'type': tag.tag}
+
+            if tag.attrib.get('toName'):
+                tag_info['to_name'] = tag.attrib['toName'].split(',')
+
             if variables:
                 # Find variables in tag_name and regex if find it
                 for v in variables:
@@ -63,7 +68,8 @@ def parse_config(config_string):
             conditionals = {}
             if tag.attrib.get('perRegion') == 'true':
                 if tag.attrib.get('whenTagName'):
-                    conditionals = {'type': 'tag', 'name': tag.attrib['whenTagName']}
+                    conditionals = {'type': 'tag',
+                                    'name': tag.attrib['whenTagName']}
                 elif tag.attrib.get('whenLabelValue'):
                     conditionals = {
                         'type': 'label',
@@ -78,6 +84,9 @@ def parse_config(config_string):
                 tag_info['conditionals'] = conditionals
             if has_variable(tag.attrib.get("value", "")):
                 tag_info['dynamic_labels'] = True
+            if _is_hybrid_tag(tag):
+                tag_info['value'] = tag.attrib['value']
+
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
             inputs[tag.attrib['name']] = {
@@ -86,29 +95,32 @@ def parse_config(config_string):
             }
         if tag.tag not in _LABEL_TAGS:
             continue
+
         parent_name = _get_parent_output_tag_name(tag, outputs)
         if parent_name is not None:
             actual_value = tag.attrib.get('alias') or tag.attrib.get('value')
             if not actual_value:
                 logger.debug(
                     'Inspecting tag {tag_name}... found no "value" or "alias" attributes.'.format(
-                        tag_name=etree.tostring(tag, encoding='unicode').strip()[:50]
+                        tag_name=etree.tostring(
+                            tag, encoding='unicode').strip()[:50]
                     )
                 )
             else:
                 labels[parent_name][actual_value] = dict(tag.attrib)
     for output_tag, tag_info in outputs.items():
         tag_info['inputs'] = []
-        for input_tag_name in tag_info['to_name']:
-            if input_tag_name not in inputs:
-                logger.info(
-                    f'to_name={input_tag_name} is specified for output tag name={output_tag}, '
-                    'but we can\'t find it among input tags'
-                )
-                continue
-            tag_info['inputs'].append(inputs[input_tag_name])
-        tag_info['labels'] = list(labels[output_tag])
-        tag_info['labels_attrs'] = labels[output_tag]
+        if 'to_name' in tag_info:
+            for input_tag_name in tag_info['to_name']:
+                if input_tag_name not in inputs:
+                    logger.info(
+                        f'to_name={input_tag_name} is specified for output tag name={output_tag}, '
+                        'but we can\'t find it among input tags'
+                    )
+                    continue
+                tag_info['inputs'].append(inputs[input_tag_name])
+            tag_info['labels'] = list(labels[output_tag])
+            tag_info['labels_attrs'] = labels[output_tag]
     return outputs
 
 
@@ -139,15 +151,27 @@ def _is_input_tag(tag):
     return tag.attrib.get('name') and tag.attrib.get('value')
 
 
+def _is_hybrid_tag(tag):
+    """
+    Check if tag is hybrid
+    """
+    return (
+        tag.attrib.get('name') and
+        tag.attrib.get('value') and
+        not tag.attrib.get('toName') and
+        tag.tag in _HYBRID_TAGS
+    )
+
+
 def _is_output_tag(tag):
     """
     Check if tag is output
     """
     return (
-        tag.attrib.get('name')
-        and tag.attrib.get('toName')
-        and tag.tag not in _NOT_CONTROL_TAGS
-    )
+        tag.attrib.get('name') and
+        tag.attrib.get('toName') and
+        tag.tag not in _NOT_CONTROL_TAGS
+    ) or _is_hybrid_tag(tag)
 
 
 def _get_parent_output_tag_name(tag, outputs):
