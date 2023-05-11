@@ -156,10 +156,10 @@ def _is_hybrid_tag(tag):
     Check if tag is hybrid
     """
     return (
-        tag.attrib.get('name') and
-        tag.attrib.get('value') and
-        not tag.attrib.get('toName') and
-        tag.tag in _HYBRID_TAGS
+        tag.attrib.get('name')
+        and tag.attrib.get('value')
+        and not tag.attrib.get('toName')
+        and tag.tag in _HYBRID_TAGS
     )
 
 
@@ -168,9 +168,9 @@ def _is_output_tag(tag):
     Check if tag is output
     """
     return (
-        tag.attrib.get('name') and
-        tag.attrib.get('toName') and
-        tag.tag not in _NOT_CONTROL_TAGS
+        tag.attrib.get('name')
+        and tag.attrib.get('toName')
+        and tag.tag not in _NOT_CONTROL_TAGS
     ) or _is_hybrid_tag(tag)
 
 
