@@ -129,3 +129,38 @@ def test_not_dynamic_labels_parse_config():
     )
     assert not outputs['label'].get('dynamic_labels', False)
     assert 'dynamic_labels' not in outputs['label']
+
+
+def test_ranker_as_self_output_parse_config():
+    """
+    Test adding Ranker to outputs
+    """
+    outputs = parse_config(
+        '''
+                <View>
+                  <Header value="Re-rank the selected items"/>
+                  <Ranker name="ranker" value="$items" />
+                </View>'''
+    )
+
+    assert outputs['ranker']['type'] == 'Ranker'
+    assert outputs['ranker']['to_name'] == ['ranker']
+    assert outputs['ranker']['from_name'] == ['ranker']
+
+
+def test_ranker_parse_config():
+    """
+    Test adding Ranker to inputs
+    """
+    outputs = parse_config(
+        '''
+                <View>
+                  <Header value="Re-rank the selected items"/>
+                  <Text name="text" value="This is some text output here" />
+                  <Ranker name="ranker" toName="text" value="$items" />
+                </View>'''
+    )
+
+    assert outputs['ranker']['type'] == 'Ranker'
+    assert outputs['ranker']['to_name'] == ['text']
+    assert outputs['ranker']['from_name'] == ['ranker']

@@ -85,6 +85,10 @@ def parse_config(config_string):
             if has_variable(tag.attrib.get("value", "")):
                 tag_info['dynamic_labels'] = True
             if _is_hybrid_tag(tag):
+                # Hybrid tags can self reference, so we need to handle that
+                if not tag_info.get('to_name'):
+                    tag_info['to_name'] = [tag.attrib['name']]
+
                 tag_info['value'] = tag.attrib['value']
 
             outputs[tag.attrib['name']] = tag_info
@@ -110,17 +114,16 @@ def parse_config(config_string):
                 labels[parent_name][actual_value] = dict(tag.attrib)
     for output_tag, tag_info in outputs.items():
         tag_info['inputs'] = []
-        if 'to_name' in tag_info:
-            for input_tag_name in tag_info['to_name']:
-                if input_tag_name not in inputs:
-                    logger.info(
-                        f'to_name={input_tag_name} is specified for output tag name={output_tag}, '
-                        'but we can\'t find it among input tags'
-                    )
-                    continue
-                tag_info['inputs'].append(inputs[input_tag_name])
-            tag_info['labels'] = list(labels[output_tag])
-            tag_info['labels_attrs'] = labels[output_tag]
+        for input_tag_name in tag_info['to_name']:
+            if input_tag_name not in inputs:
+                logger.info(
+                    f'to_name={input_tag_name} is specified for output tag name={output_tag}, '
+                    'but we can\'t find it among input tags'
+                )
+                continue
+            tag_info['inputs'].append(inputs[input_tag_name])
+        tag_info['labels'] = list(labels[output_tag])
+        tag_info['labels_attrs'] = labels[output_tag]
     return outputs
 
 
