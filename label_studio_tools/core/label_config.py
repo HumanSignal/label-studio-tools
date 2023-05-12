@@ -11,6 +11,10 @@ from label_studio_tools.core.utils.exceptions import (
 logger = logging.getLogger(__name__)
 
 _LABEL_TAGS = {'Label', 'Choice', 'Relation'}
+"""Hybrid tags are tags that can be both input and output tags (e.g. Ranker)
+These tags are special because they can be used to reference themselves, and always have a "value" attribute,
+and conditionally could have a "toName" attribute.
+"""
 _HYBRID_TAGS = {'Ranker'}
 _NOT_CONTROL_TAGS = {
     'Filter',
@@ -51,6 +55,7 @@ def parse_config(config_string):
         if tag.attrib and 'indexFlag' in tag.attrib:
             variables.append(tag.attrib['indexFlag'])
         if _is_output_tag(tag):
+            # Build up the tag_info, allowing for hybrid tags to be included
             tag_info = {'type': tag.tag}
 
             if tag.attrib.get('toName'):
@@ -89,7 +94,7 @@ def parse_config(config_string):
                 if not tag_info.get('to_name'):
                     tag_info['to_name'] = [tag.attrib['name']]
 
-                tag_info['value'] = tag.attrib['value']
+                tag_info['value'] = tag.attrib['value'].lstrip('$')
 
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
