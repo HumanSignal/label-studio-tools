@@ -73,8 +73,10 @@ def parse_config(config_string):
             conditionals = {}
             if tag.attrib.get('perRegion') == 'true':
                 if tag.attrib.get('whenTagName'):
-                    conditionals = {'type': 'tag',
-                                    'name': tag.attrib['whenTagName']}
+                    conditionals = {
+                        'type': 'tag',
+                        'name': tag.attrib['whenTagName']
+                    }
                 elif tag.attrib.get('whenLabelValue'):
                     conditionals = {
                         'type': 'label',
