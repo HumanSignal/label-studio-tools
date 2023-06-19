@@ -13,7 +13,7 @@ with open(requirements_file, 'r') as f:
 
 setuptools.setup(
     name='label-studio-tools',
-    version='0.0.2.dev',
+    version='0.0.3.dev',
     author='Heartex',
     author_email="hello@heartex.ai",
     description='Label studio common tools',
