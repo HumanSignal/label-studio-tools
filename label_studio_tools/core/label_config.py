@@ -76,7 +76,7 @@ def parse_config(config_string):
                     }
             if conditionals:
                 tag_info['conditionals'] = conditionals
-            if has_variable(tag.attrib.get("value", "")):
+            if has_variable(tag.attrib.get("value", "")) or has_variable(tag.attrib.get("apiUrl", "")):
                 tag_info['dynamic_labels'] = True
             outputs[tag.attrib['name']] = tag_info
         elif _is_input_tag(tag):
