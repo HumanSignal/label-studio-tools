@@ -53,15 +53,19 @@ def get_local_path(
     :param download_resources: Download external files
     :return: filepath
     """
-    is_local_file = url.startswith('/data/') and '?d=' in url
-    is_uploaded_file = url.startswith('/data/upload')
+    is_local_file = (url.startswith('/data/') or url.startswith('/storage-data/')) and '?d=' in url
+    is_uploaded_file = url.startswith('/data/upload') or url.startswith('/storage-data/upload')
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
 
     # File reference created with --allow-serving-local-files option
     if is_local_file:
-        filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
+        filename, dir_path = (
+            url.split('/data/', 1) 
+            if url.startswith('/data/') else 
+            url.split('/storage-data/', 1)
+        )[-1].split('?d=')
         dir_path = str(urllib.parse.unquote(dir_path))
         filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
         if not os.path.exists(filepath):
