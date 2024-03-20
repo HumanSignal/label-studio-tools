@@ -100,7 +100,11 @@ def get_local_path(
     if not os.path.exists(filepath):
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
         if download_resources:
-            headers = {'Authorization': 'Token ' + access_token} if access_token else {}
+            # check if url matches hostname - then uses access token to this Label Studio instance
+            if access_token and hostname and parsed_url.netloc == urlparse(hostname).netloc:
+                headers = {'Authorization': 'Token ' + access_token}
+            else:
+                headers = {}
             r = requests.get(url, stream=True, headers=headers)
             r.raise_for_status()
             with io.open(filepath, mode='wb') as fout:
