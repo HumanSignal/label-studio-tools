@@ -47,14 +47,19 @@ def get_local_path(
     :param url: File url
     :param cache_dir: Cache directory to download or copy files
     :param project_dir: Project directory
-    :param hostname: Hostname for external resource
+    :param hostname: Hostname for external resource,
+      if not provided, it will be taken from LABEL_STUDIO_URL env variable
     :param image_dir: Image directory
-    :param access_token: Access token for external resource (e.g. LS backend)
+    :param access_token: Access token for external resource (e.g. LS backend),
+      if not provided, it will be taken from LABEL_STUDIO_API_KEY env variable
     :param download_resources: Download external files
     :return: filepath
     """
+    hostname = hostname or os.getenv('LABEL_STUDIO_URL', '')
+    access_token = access_token or os.getenv('LABEL_STUDIO_API_KEY', '')
+
     is_local_file = url.startswith('/data/') and '?d=' in url
-    is_uploaded_file = url.startswith('/data/upload')
+    is_uploaded_file = url.startswith('/data/upload') or url.startswith('upload') or url.startswith('/upload')
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
