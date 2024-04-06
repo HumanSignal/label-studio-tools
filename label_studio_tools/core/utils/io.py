@@ -43,9 +43,10 @@ def get_local_path(
     image_dir=None,
     access_token=None,
     download_resources=True,
+    task_id=None,
 ):
-    """
-    Get local path for url
+    """Get local path for url
+
     :param url: File url
     :param cache_dir: Cache directory to download or copy files
     :param project_dir: Project directory
@@ -55,6 +56,8 @@ def get_local_path(
     :param access_token: Access token for external resource (e.g. LS backend),
       if not provided, it will be taken from LABEL_STUDIO_API_KEY env variable
     :param download_resources: Download external files
+    :param task_id: Label Studio Task ID, required for cloud storage files because of permissions
+
     :return: filepath
     """
     # get environment variables
@@ -79,6 +82,7 @@ def get_local_path(
 
     is_local_storage_file = url.startswith('/data/') and '?d=' in url
     is_uploaded_file = url.startswith('/data/upload')
+    is_cloud_storage_file = url.startswith('s3:') or url.startswith('gs:') or url.startswith('azure-blob:')
 
     # Local storage file: try to load locally otherwise download below
     if is_local_storage_file:
@@ -100,16 +104,24 @@ def get_local_path(
         return filepath
 
     # Upload or Local Storage file
-    if is_uploaded_file or is_local_storage_file:
-        # add hostname to url
-        if hostname:
-            url = concat_urls(hostname, url)
-            logger.info('Uploaded file: Resolving url using hostname [' + hostname + ']: ' + url)
-        else:
+    if is_uploaded_file or is_local_storage_file or is_cloud_storage_file:
+        # hostname check
+        if not hostname:
             raise FileNotFoundError(
-                f"Can't resolve url, neither hostname or project_dir passed: {url}." 
+                f"Can't resolve url, neither hostname or project_dir passed: {url}."
                 "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
             )
+        # uploaded and local storage file
+        elif is_uploaded_file or is_local_storage_file:
+            url = concat_urls(hostname, url)
+            logger.info('Uploaded file: Resolving url using hostname [' + hostname + ']: ' + url)
+        # s3, gs, azure-blob file
+        elif is_cloud_storage_file:
+            if task_id is None:
+                raise Exception("Label Studio Task ID is required for cloud storage files")
+            url = concat_urls(hostname, f'/tasks/{task_id}/presign/?fileuri={url}"')
+            logger.info('Cloud storage file: Resolving url using hostname [' + hostname + ']: ' + url)
+
         # check access token
         if not access_token:
             raise FileNotFoundError(
