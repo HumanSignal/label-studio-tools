@@ -7,7 +7,7 @@ import requests
 import os
 
 from appdirs import user_cache_dir, user_data_dir
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from contextlib import contextmanager
 from tempfile import mkdtemp
 
@@ -49,34 +49,46 @@ def get_local_path(
     :param project_dir: Project directory
     :param hostname: Hostname for external resource,
       if not provided, it will be taken from LABEL_STUDIO_URL env variable
-    :param image_dir: Image directory
+    :param image_dir: Image and other media upload directory
     :param access_token: Access token for external resource (e.g. LS backend),
       if not provided, it will be taken from LABEL_STUDIO_API_KEY env variable
     :param download_resources: Download external files
     :return: filepath
     """
+    # get environment variables
     hostname = hostname or os.getenv('LABEL_STUDIO_URL', '')
     access_token = access_token or os.getenv('LABEL_STUDIO_API_KEY', '')
+    if 'localhost' in hostname:
+        logger.warning(
+            f'Using `localhost` ({hostname}) in LABEL_STUDIO_URL, '
+            f'`localhost` is not accessible inside of docker containers. '
+            f'You can check your IP with utilities like `ifconfig` and set it as LABEL_STUDIO_URL.'
+        )
 
-    is_local_file = url.startswith('/data/') and '?d=' in url
-    is_uploaded_file = url.startswith('/data/upload') or url.startswith('upload') or url.startswith('/upload')
+    # try to get local directories
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
         logger.debug(f"Image and upload dirs: image_dir={image_dir}, upload_dir={upload_dir}")
 
-    # File reference created with --allow-serving-local-files option
-    if is_local_file:
+    # fix file upload url
+    if url.startswith('upload') or url.startswith('/upload'):
+        url = '/data' + ('' if url.startswith('/') else '/') + url
+
+    is_local_storage_file = url.startswith('/data/') and '?d=' in url
+    is_uploaded_file = url.startswith('/data/upload')
+
+    # Local storage file: try to load locally otherwise download below
+    if is_local_storage_file:
         filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
         dir_path = str(urllib.parse.unquote(dir_path))
         filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(filepath)
-        logger.debug(f"Local Storage file path: {filepath}")
-        return filepath
+        if os.path.exists(filepath):
+            logger.debug(f"Local Storage file path exists locally, use it as a local file: {filepath}")
+            return filepath
 
-    # File uploaded via import UI
-    elif is_uploaded_file and os.path.exists(image_dir):
+    # Uploaded file: try to load locally otherwise download below
+    if is_uploaded_file and os.path.exists(image_dir):
         project_id = url.split("/")[-2]  # To retrieve project_id
         image_dir = os.path.join(image_dir, project_id)
         filepath = os.path.join(image_dir, os.path.basename(url))
@@ -85,22 +97,29 @@ def get_local_path(
         logger.debug(f"Uploaded file: Path exists in image_dir: {filepath}")
         return filepath
 
-    elif is_uploaded_file and hostname:
-        url = hostname + url
-        logger.info('Uploaded file: Resolving url using hostname [' + hostname + '] from LSB: ' + url)
+    # Upload or Local Storage file
+    if is_uploaded_file or is_local_storage_file:
+        # add hostname to url
+        if hostname:
+            url = os.path.join(hostname, url)
+            logger.info('Uploaded file: Resolving url using hostname [' + hostname + '] from LSB: ' + url)
+        else:
+            raise FileNotFoundError(
+                f"Can't resolve url, neither hostname or project_dir passed: {url}." 
+                "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
+            )
+        # check access token
+        if not access_token:
+            raise FileNotFoundError(
+                "To access uploaded and local storage files you have to " 
+                "set LABEL_STUDIO_API_KEY environment variable."
+            )
 
-    elif is_uploaded_file:
-        raise FileNotFoundError(
-            f"Can't resolve url, neither hostname or project_dir passed: {url}." 
-            "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
-        )
+    filepath = download_and_cache(url, cache_dir, download_resources, hostname, access_token)
+    return filepath
 
-    if is_uploaded_file and not access_token:
-        raise FileNotFoundError(
-            "Can't access file, no access_token provided for Label Studio Backend."
-            "You can set LABEL_STUDIO_API_KEY environment variable to use it as an access token."
-        )
 
+def download_and_cache(url, cache_dir, download_resources, hostname, access_token):
     # File specified by remote URL - download and cache it
     cache_dir = cache_dir or get_cache_dir()
     parsed_url = urlparse(url)
