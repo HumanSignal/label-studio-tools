@@ -119,7 +119,7 @@ def get_local_path(
         elif is_cloud_storage_file:
             if task_id is None:
                 raise Exception("Label Studio Task ID is required for cloud storage files")
-            url = concat_urls(hostname, f'/tasks/{task_id}/presign/?fileuri={url}"')
+            url = concat_urls(hostname, f'/tasks/{task_id}/presign/?fileuri={url}')
             logger.info('Cloud storage file: Resolving url using hostname [' + hostname + ']: ' + url)
 
         # check access token
