@@ -146,7 +146,10 @@ def download_and_cache(url, cache_dir, download_resources, hostname, access_toke
             # check if url matches hostname - then uses access token to this Label Studio instance
             logger.info(f"================> {parsed_url.netloc} :: {urlparse(hostname).netloc} :: {parsed_url.netloc == urlparse(hostname)}\n\n\n\n")
             if access_token and hostname and parsed_url.netloc == urlparse(hostname).netloc:
-                headers = {'Authorization': 'Token ' + access_token}
+                headers = {
+                    'Authorization': 'Bearer ' + access_token,
+                    'Authorization': 'Token ' + access_token
+                }
                 logger.info("====> Authorization headers: " + str(headers))
             else:
                 headers = {}
