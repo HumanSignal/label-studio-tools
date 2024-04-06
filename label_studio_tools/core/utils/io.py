@@ -20,6 +20,8 @@ LOCAL_FILES_DOCUMENT_ROOT = get_env(
 
 logger = logging.getLogger(__name__)
 
+def concat_urls(base_url, url):
+    return base_url.rstrip('/') + '/' + url.lstrip('/')
 
 def get_data_dir():
     data_dir = user_data_dir(appname=_DIR_APP_NAME)
@@ -101,8 +103,8 @@ def get_local_path(
     if is_uploaded_file or is_local_storage_file:
         # add hostname to url
         if hostname:
-            url = os.path.join(hostname, url)
-            logger.info('Uploaded file: Resolving url using hostname [' + hostname + '] from LSB: ' + url)
+            url = concat_urls(hostname, url)
+            logger.info('Uploaded file: Resolving url using hostname [' + hostname + ']: ' + url)
         else:
             raise FileNotFoundError(
                 f"Can't resolve url, neither hostname or project_dir passed: {url}." 
