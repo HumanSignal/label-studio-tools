@@ -114,7 +114,7 @@ def get_local_path(
         # uploaded and local storage file
         elif is_uploaded_file or is_local_storage_file:
             url = concat_urls(hostname, url)
-            logger.info('Uploaded file: Resolving url using hostname [' + hostname + ']: ' + url)
+            logger.info('Resolving url using hostname [' + hostname + ']: ' + url)
         # s3, gs, azure-blob file
         elif is_cloud_storage_file:
             if task_id is None:
@@ -144,6 +144,7 @@ def download_and_cache(url, cache_dir, download_resources, hostname, access_toke
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
         if download_resources:
             # check if url matches hostname - then uses access token to this Label Studio instance
+            logger.info(f"================> {parsed_url.netloc} :: {urlparse(hostname)} :: {parsed_url.netloc == urlparse(hostname)}\n\n\n\n")
             if access_token and hostname and parsed_url.netloc == urlparse(hostname).netloc:
                 headers = {'Authorization': 'Token ' + access_token}
             else:
