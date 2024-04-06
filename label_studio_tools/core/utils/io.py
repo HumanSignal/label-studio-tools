@@ -63,6 +63,7 @@ def get_local_path(
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
+        logger.debug(f"Image and upload dirs: image_dir={image_dir}, upload_dir={upload_dir}")
 
     # File reference created with --allow-serving-local-files option
     if is_local_file:
@@ -71,6 +72,7 @@ def get_local_path(
         filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
         if not os.path.exists(filepath):
             raise FileNotFoundError(filepath)
+        logger.debug(f"Local Storage file path: {filepath}")
         return filepath
 
     # File uploaded via import UI
@@ -80,20 +82,23 @@ def get_local_path(
         filepath = os.path.join(image_dir, os.path.basename(url))
         if cache_dir and download_resources:
             shutil.copy(filepath, cache_dir)
+        logger.debug(f"Uploaded file: Path exists in image_dir: {filepath}")
         return filepath
 
     elif is_uploaded_file and hostname:
         url = hostname + url
-        logger.info('Resolving url using hostname [' + hostname + '] from LSB: ' + url)
+        logger.info('Uploaded file: Resolving url using hostname [' + hostname + '] from LSB: ' + url)
 
     elif is_uploaded_file:
         raise FileNotFoundError(
-            "Can't resolve url, neither hostname or project_dir passed: " + url
+            f"Can't resolve url, neither hostname or project_dir passed: {url}." 
+            "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
         )
 
     if is_uploaded_file and not access_token:
         raise FileNotFoundError(
-            "Can't access file, no access_token provided for Label Studio Backend"
+            "Can't access file, no access_token provided for Label Studio Backend."
+            "You can set LABEL_STUDIO_API_KEY environment variable to use it as an access token."
         )
 
     # File specified by remote URL - download and cache it
