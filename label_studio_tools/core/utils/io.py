@@ -7,7 +7,7 @@ import requests
 import os
 
 from appdirs import user_cache_dir, user_data_dir
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from contextlib import contextmanager
 from tempfile import mkdtemp
 
@@ -20,6 +20,8 @@ LOCAL_FILES_DOCUMENT_ROOT = get_env(
 
 logger = logging.getLogger(__name__)
 
+def concat_urls(base_url, url):
+    return base_url.rstrip('/') + '/' + url.lstrip('/')
 
 def get_data_dir():
     data_dir = user_data_dir(appname=_DIR_APP_NAME)
@@ -41,68 +43,138 @@ def get_local_path(
     image_dir=None,
     access_token=None,
     download_resources=True,
+    task_id=None,
 ):
-    """
-    Get local path for url
+    """Get local path for url
+
     :param url: File url
     :param cache_dir: Cache directory to download or copy files
     :param project_dir: Project directory
-    :param hostname: Hostname for external resource
-    :param image_dir: Image directory
-    :param access_token: Access token for external resource (e.g. LS backend)
+    :param hostname: Hostname for external resource,
+      if not provided, it will be taken from LABEL_STUDIO_URL env variable
+    :param image_dir: Image and other media upload directory
+    :param access_token: Access token for external resource (e.g. LS backend),
+      if not provided, it will be taken from LABEL_STUDIO_API_KEY env variable
     :param download_resources: Download external files
+    :param task_id: Label Studio Task ID, required for cloud storage files because of permissions
+
     :return: filepath
     """
-    is_local_file = url.startswith('/data/') and '?d=' in url
+    # get environment variables
+    hostname = (
+            hostname
+            or os.getenv('LABEL_STUDIO_URL', '')
+            or os.getenv('LABEL_STUDIO_HOST', '')
+    )
+    access_token = (
+            access_token
+            or os.getenv('LABEL_STUDIO_API_KEY', '')
+            or os.getenv('LABEL_STUDIO_ACCESS_TOKEN', '')
+    )
+    if 'localhost' in hostname:
+        logger.warning(
+            f'Using `localhost` ({hostname}) in LABEL_STUDIO_URL, '
+            f'`localhost` is not accessible inside of docker containers. '
+            f'You can check your IP with utilities like `ifconfig` and set it as LABEL_STUDIO_URL.'
+        )
+
+    # fix file upload url
+    if url.startswith('upload') or url.startswith('/upload'):
+        url = '/data' + ('' if url.startswith('/') else '/') + url
+
     is_uploaded_file = url.startswith('/data/upload')
+    is_local_storage_file = url.startswith('/data/') and '?d=' in url
+    is_cloud_storage_file = url.startswith('s3:') or url.startswith('gs:') or url.startswith('azure-blob:')
+
+    # Local storage file: try to load locally otherwise download below
+    # this code allow to read Local Storage files directly from a directory
+    # instead of downloading them from LS instance
+    if is_local_storage_file:
+        filepath = url.split('?d=')[1]
+        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, filepath)
+        if os.path.exists(filepath):
+            logger.debug(f"Local Storage file path exists locally, use it as a local file: {filepath}")
+            return filepath
+
+    # try to get local directories
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
+        logger.debug(f"Image and upload dirs: image_dir={image_dir}, upload_dir={upload_dir}")
 
-    # File reference created with --allow-serving-local-files option
-    if is_local_file:
-        filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
-        dir_path = str(urllib.parse.unquote(dir_path))
-        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
-        if not os.path.exists(filepath):
-            raise FileNotFoundError(filepath)
-        return filepath
-
-    # File uploaded via import UI
-    elif is_uploaded_file and os.path.exists(image_dir):
+    # Uploaded file: try to load locally otherwise download below
+    # this code allow to read Uploaded files directly from a directory
+    # instead of downloading them from LS instance
+    if is_uploaded_file and os.path.exists(image_dir):
         project_id = url.split("/")[-2]  # To retrieve project_id
-        image_dir = os.path.join(image_dir, project_id)
-        filepath = os.path.join(image_dir, os.path.basename(url))
+        filepath = os.path.join(image_dir, project_id, os.path.basename(url))
         if cache_dir and download_resources:
             shutil.copy(filepath, cache_dir)
+        logger.debug(f"Uploaded file: Path exists in image_dir: {filepath}")
         return filepath
 
-    elif is_uploaded_file and hostname:
-        url = hostname + url
-        logger.info('Resolving url using hostname [' + hostname + '] from LSB: ' + url)
+    # Upload or Local Storage file
+    if is_uploaded_file or is_local_storage_file or is_cloud_storage_file:
+        # hostname check
+        if not hostname:
+            raise FileNotFoundError(
+                f"Can't resolve url, neither hostname or project_dir passed: {url}. "
+                "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
+            )
+        # uploaded and local storage file
+        elif is_uploaded_file or is_local_storage_file:
+            url = concat_urls(hostname, url)
+            logger.info('Resolving url using hostname [' + hostname + ']: ' + url)
+        # s3, gs, azure-blob file
+        elif is_cloud_storage_file:
+            if task_id is None:
+                raise Exception("Label Studio Task ID is required for cloud storage files")
+            url = concat_urls(hostname, f'/tasks/{task_id}/presign/?fileuri={url}')
+            logger.info('Cloud storage file: Resolving url using hostname [' + hostname + ']: ' + url)
 
-    elif is_uploaded_file:
-        raise FileNotFoundError(
-            "Can't resolve url, neither hostname or project_dir passed: " + url
-        )
+        # check access token
+        if not access_token:
+            raise FileNotFoundError(
+                "To access uploaded and local storage files you have to " 
+                "set LABEL_STUDIO_API_KEY environment variable."
+            )
 
-    if is_uploaded_file and not access_token:
-        raise FileNotFoundError(
-            "Can't access file, no access_token provided for Label Studio Backend"
-        )
+    filepath = download_and_cache(
+        url, cache_dir, download_resources, hostname, access_token,
+        is_local_storage_file, is_cloud_storage_file
+    )
+    return filepath
 
+
+def download_and_cache(
+        url,
+        cache_dir,
+        download_resources,
+        hostname,
+        access_token,
+        is_local_storage_file,
+        is_cloud_storage_file
+):
     # File specified by remote URL - download and cache it
     cache_dir = cache_dir or get_cache_dir()
     parsed_url = urlparse(url)
-    url_filename = os.path.basename(parsed_url.path)
-    url_hash = hashlib.md5(url.encode()).hexdigest()[:6]
+    url_filename = (
+        # /data/local-files?d=dir/1.jpg => 1.jpg
+        os.path.basename(url)
+        if is_local_storage_file or is_cloud_storage_file else
+        # /some/url/1.jpg?expire=xxx => 1.jpg
+        os.path.basename(parsed_url.path)
+    )
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
     filepath = os.path.join(cache_dir, url_hash + '__' + url_filename)
+
     if not os.path.exists(filepath):
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
         if download_resources:
             # check if url matches hostname - then uses access token to this Label Studio instance
             if access_token and hostname and parsed_url.netloc == urlparse(hostname).netloc:
                 headers = {'Authorization': 'Token ' + access_token}
+                logger.debug('Authorization token is used for download_and_cache')
             else:
                 headers = {}
             r = requests.get(url, stream=True, headers=headers)
