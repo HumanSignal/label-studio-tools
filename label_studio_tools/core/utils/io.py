@@ -70,34 +70,36 @@ def get_local_path(
             f'You can check your IP with utilities like `ifconfig` and set it as LABEL_STUDIO_URL.'
         )
 
+    # fix file upload url
+    if url.startswith('upload') or url.startswith('/upload'):
+        url = '/data' + ('' if url.startswith('/') else '/') + url
+
+    is_uploaded_file = url.startswith('/data/upload')
+    is_local_storage_file = url.startswith('/data/') and '?d=' in url
+    is_cloud_storage_file = url.startswith('s3:') or url.startswith('gs:') or url.startswith('azure-blob:')
+
+    # Local storage file: try to load locally otherwise download below
+    # this code allow to read Local Storage files directly from a directory
+    # instead of downloading them from LS instance
+    if is_local_storage_file:
+        filepath = url.split('?d=')[1]
+        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, filepath)
+        if os.path.exists(filepath):
+            logger.debug(f"Local Storage file path exists locally, use it as a local file: {filepath}")
+            return filepath
+
     # try to get local directories
     if image_dir is None:
         upload_dir = os.path.join(get_data_dir(), 'media', 'upload')
         image_dir = project_dir and os.path.join(project_dir, 'upload') or upload_dir
         logger.debug(f"Image and upload dirs: image_dir={image_dir}, upload_dir={upload_dir}")
 
-    # fix file upload url
-    if url.startswith('upload') or url.startswith('/upload'):
-        url = '/data' + ('' if url.startswith('/') else '/') + url
-
-    is_local_storage_file = url.startswith('/data/') and '?d=' in url
-    is_uploaded_file = url.startswith('/data/upload')
-    is_cloud_storage_file = url.startswith('s3:') or url.startswith('gs:') or url.startswith('azure-blob:')
-
-    # Local storage file: try to load locally otherwise download below
-    if is_local_storage_file:
-        filename, dir_path = url.split('/data/', 1)[-1].split('?d=')
-        dir_path = str(urllib.parse.unquote(dir_path))
-        filepath = os.path.join(LOCAL_FILES_DOCUMENT_ROOT, dir_path)
-        if os.path.exists(filepath):
-            logger.debug(f"Local Storage file path exists locally, use it as a local file: {filepath}")
-            return filepath
-
     # Uploaded file: try to load locally otherwise download below
+    # this code allow to read Uploaded files directly from a directory
+    # instead of downloading them from LS instance
     if is_uploaded_file and os.path.exists(image_dir):
         project_id = url.split("/")[-2]  # To retrieve project_id
-        image_dir = os.path.join(image_dir, project_id)
-        filepath = os.path.join(image_dir, os.path.basename(url))
+        filepath = os.path.join(image_dir, project_id, os.path.basename(url))
         if cache_dir and download_resources:
             shutil.copy(filepath, cache_dir)
         logger.debug(f"Uploaded file: Path exists in image_dir: {filepath}")
@@ -129,17 +131,35 @@ def get_local_path(
                 "set LABEL_STUDIO_API_KEY environment variable."
             )
 
-    filepath = download_and_cache(url, cache_dir, download_resources, hostname, access_token)
+    filepath = download_and_cache(
+        url, cache_dir, download_resources, hostname, access_token,
+        is_local_storage_file, is_cloud_storage_file
+    )
     return filepath
 
 
-def download_and_cache(url, cache_dir, download_resources, hostname, access_token):
+def download_and_cache(
+        url,
+        cache_dir,
+        download_resources,
+        hostname,
+        access_token,
+        is_local_storage_file,
+        is_cloud_storage_file
+):
     # File specified by remote URL - download and cache it
     cache_dir = cache_dir or get_cache_dir()
     parsed_url = urlparse(url)
-    url_filename = os.path.basename(parsed_url.path)
-    url_hash = hashlib.md5(url.encode()).hexdigest()[:6]
+    url_filename = (
+        # /data/local-files?d=dir/1.jpg => 1.jpg
+        os.path.basename(url)
+        if is_local_storage_file or is_cloud_storage_file else
+        # /some/url/1.jpg?expire=xxx => 1.jpg
+        os.path.basename(parsed_url.path)
+    )
+    url_hash = hashlib.md5(url.encode()).hexdigest()[:8]
     filepath = os.path.join(cache_dir, url_hash + '__' + url_filename)
+
     if not os.path.exists(filepath):
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
         if download_resources:
