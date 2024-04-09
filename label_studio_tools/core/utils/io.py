@@ -61,8 +61,16 @@ def get_local_path(
     :return: filepath
     """
     # get environment variables
-    hostname = hostname or os.getenv('LABEL_STUDIO_URL', '')
-    access_token = access_token or os.getenv('LABEL_STUDIO_API_KEY', '')
+    hostname = (
+            hostname
+            or os.getenv('LABEL_STUDIO_URL', '')
+            or os.getenv('LABEL_STUDIO_HOST', '')
+    )
+    access_token = (
+            access_token
+            or os.getenv('LABEL_STUDIO_API_KEY', '')
+            or os.getenv('LABEL_STUDIO_ACCESS_TOKEN', '')
+    )
     if 'localhost' in hostname:
         logger.warning(
             f'Using `localhost` ({hostname}) in LABEL_STUDIO_URL, '
