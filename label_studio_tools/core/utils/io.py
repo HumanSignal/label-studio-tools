@@ -45,18 +45,19 @@ def get_local_path(
     download_resources=True,
     task_id=None,
 ):
-    """Get local path for url
+    f"""This helper function is used to download (cache) url and return local path to it.
 
-    :param url: File url
+    :param url: File URL to download, it can be a uploaded file, local storage, cloud storage file or just http(s) url
     :param cache_dir: Cache directory to download or copy files
     :param project_dir: Project directory
-    :param hostname: Hostname for external resource,
+    :param hostname: Label Studio Hostname, it will be used for uploaded files, local storage files and cloud storage files
       if not provided, it will be taken from LABEL_STUDIO_URL env variable
     :param image_dir: Image and other media upload directory
-    :param access_token: Access token for external resource (e.g. LS backend),
+    :param access_token: Label Studio access token, it will be used for uploaded files, local storage files and cloud storage files
       if not provided, it will be taken from LABEL_STUDIO_API_KEY env variable
-    :param download_resources: Download external files
-    :param task_id: Label Studio Task ID, required for cloud storage files because of permissions
+    :param download_resources: Download and cache a file from URL
+    :param task_id: Label Studio Task ID, required for cloud storage files 
+      because the URL will be rebuilt to `{hostname}/tasks/{task_id}/presign/?fileuri={url}` 
 
     :return: filepath
     """
