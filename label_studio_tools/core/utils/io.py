@@ -110,7 +110,7 @@ def get_local_path(
         # hostname check
         if not hostname:
             raise FileNotFoundError(
-                f"Can't resolve url, neither hostname or project_dir passed: {url}."
+                f"Can't resolve url, neither hostname or project_dir passed: {url}. "
                 "You can set LABEL_STUDIO_URL environment variable to use it as a hostname."
             )
         # uploaded and local storage file
