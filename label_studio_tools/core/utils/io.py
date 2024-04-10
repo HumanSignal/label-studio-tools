@@ -172,12 +172,14 @@ def download_and_cache(
     if not os.path.exists(filepath):
         logger.info('Download {url} to {filepath}'.format(url=url, filepath=filepath))
         if download_resources:
+            headers = {
+                # avoid requests.exceptions.HTTPError: 403 Client Error: Forbidden. Please comply with the User-Agent policy:
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36'
+            }
             # check if url matches hostname - then uses access token to this Label Studio instance
             if access_token and hostname and parsed_url.netloc == urlparse(hostname).netloc:
-                headers = {'Authorization': 'Token ' + access_token}
+                headers['Authorization'] = 'Token ' + access_token
                 logger.debug('Authorization token is used for download_and_cache')
-            else:
-                headers = {}
             r = requests.get(url, stream=True, headers=headers)
             r.raise_for_status()
             with io.open(filepath, mode='wb') as fout:
